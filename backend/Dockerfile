@@ -23,15 +23,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start application
 CMD ["node", "src/index.js"]
-```
-
-Create `backend/.dockerignore`:
-```
-node_modules
-npm-debug.log
-.env
-.git
-.gitignore
-README.md
-src/data/articles.json
-*.log

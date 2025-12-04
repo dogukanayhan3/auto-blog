@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "🔑 Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+      - REPO_FRONTEND=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/auto-blog-frontend
+      - REPO_BACKEND=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/auto-blog-backend
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo "📦 Image tag: $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo "🏗️ Building Docker images..."
+      - docker build -t $REPO_FRONTEND:latest -t $REPO_FRONTEND:$IMAGE_TAG ./frontend
+      - docker build -t $REPO_BACKEND:latest -t $REPO_BACKEND:$IMAGE_TAG ./backend
+      - echo "✅ Build complete"
+
+  post_build:
+    commands:
+      - echo "📤 Pushing images to ECR..."
+      - docker push $REPO_FRONTEND:latest
+      - docker push $REPO_FRONTEND:$IMAGE_TAG
+      - docker push $REPO_BACKEND:latest
+      - docker push $REPO_BACKEND:$IMAGE_TAG
+      - echo "✅ Push complete"
