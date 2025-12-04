@@ -57,8 +57,8 @@ docker-compose up --build
 
 Visit:
 - **Frontend:** http://localhost
-- **Backend:** http://localhost:5000
-- **Health:** http://localhost:5000/health
+- **Backend:** http://localhost:3001
+- **Health:** http://localhost:3001/health
 
 ### 3. Generate Initial Articles
 
@@ -155,18 +155,18 @@ curl http://localhost:5000/health
 
 ```bash
 # Get all articles
-curl http://YOUR_EC2_IP:5000/api/articles
+curl http://YOUR_EC2_IP:3001/api/articles
 
 # Get single article
-curl http://YOUR_EC2_IP:5000/api/articles/1
+curl http://YOUR_EC2_IP:3001/api/articles/1
 # or by slug
-curl http://YOUR_EC2_IP:5000/api/articles/exploring-artificial-intelligence
+curl http://YOUR_EC2_IP:3001/api/articles/exploring-artificial-intelligence
 
 # Health check
-curl http://YOUR_EC2_IP:5000/health
+curl http://YOUR_EC2_IP:3001/health
 
 # Manual article generation (for testing)
-curl -X POST http://YOUR_EC2_IP:5000/api/articles/generate
+curl -X POST http://YOUR_EC2_IP:3001/api/articles/generate
 ```
 
 ## 🔧 Environment Variables

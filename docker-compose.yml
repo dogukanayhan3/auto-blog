@@ -5,9 +5,9 @@ services:
     build: ./backend
     container_name: auto-blog-backend
     ports:
-      - "5000:5000"
+      - "3001:5000"  # ← Changed from 5000:5000
     environment:
-      - PORT=5000
+      - PORT=5000  # Keep 5000 inside container
       - NODE_ENV=production
       - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
     volumes:
@@ -21,7 +21,11 @@ services:
       start_period: 40s
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=http://backend:3001/api  # ← Updated
     container_name: auto-blog-frontend
     ports:
       - "80:80"

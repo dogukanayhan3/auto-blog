@@ -37,7 +37,7 @@ docker volume create blog-data 2>/dev/null || true
 echo -e "${YELLOW}▶️  Starting backend...${NC}"
 docker run -d \
   --name blog-backend \
-  -p 5000:5000 \
+  -p 3001:5000 \
   --restart unless-stopped \
   -v blog-data:/app/src/data \
   -e NODE_ENV=production \
@@ -64,5 +64,5 @@ echo -e "${GREEN}✅ Deployment complete!${NC}"
 echo -e "${GREEN}================================${NC}"
 echo ""
 echo -e "Frontend: ${YELLOW}http://$(hostname -I | awk '{print $1}')${NC}"
-echo -e "Backend API: ${YELLOW}http://$(hostname -I | awk '{print $1}'):5000${NC}"
+echo -e "Backend API: ${YELLOW}http://$(hostname -I | awk '{print $1}'):3001${NC}"
 echo ""

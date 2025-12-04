@@ -5,7 +5,7 @@ const articleRoutes = require('./routes/articles');
 const articleJob = require('./services/articleJob');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());

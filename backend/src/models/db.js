@@ -1,82 +1,90 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../data/articles.json');
+const DATA_DIR = path.join(__dirname, '../data');
+const ARTICLES_FILE = path.join(DATA_DIR, 'articles.json');
 
-class Database {
-  constructor() {
-    this.initDB();
-  }
-
-  async initDB() {
-    try {
-      await fs.access(DB_PATH);
-    } catch (error) {
-      // File doesn't exist, create it with empty array
-      await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-      await fs.writeFile(DB_PATH, JSON.stringify([], null, 2));
-      console.log('📁 Database initialized');
-    }
-  }
-
-  async readDB() {
-    try {
-      const data = await fs.readFile(DB_PATH, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('Error reading database:', error);
-      return [];
-    }
-  }
-
-  async writeDB(data) {
-    try {
-      await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2));
-      return true;
-    } catch (error) {
-      console.error('Error writing to database:', error);
-      return false;
-    }
-  }
-
-  async getAllArticles() {
-    const articles = await this.readDB();
-    // Sort by date, newest first
-    return articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  async getArticleById(id) {
-    const articles = await this.readDB();
-    return articles.find(article => article.id === id);
-  }
-
-  async getArticleBySlug(slug) {
-    const articles = await this.readDB();
-    return articles.find(article => article.slug === slug);
-  }
-
-  async createArticle(articleData) {
-    const articles = await this.readDB();
-    
-    const newArticle = {
-      id: Date.now().toString(),
-      ...articleData,
-      createdAt: new Date().toISOString(),
-    };
-
-    articles.push(newArticle);
-    await this.writeDB(articles);
-    
-    console.log('✅ Article created:', newArticle.title);
-    return newArticle;
-  }
-
-  async deleteArticle(id) {
-    const articles = await this.readDB();
-    const filteredArticles = articles.filter(article => article.id !== id);
-    await this.writeDB(filteredArticles);
-    return true;
-  }
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-module.exports = new Database();
+// Ensure articles.json exists
+if (!fs.existsSync(ARTICLES_FILE)) {
+  fs.writeFileSync(ARTICLES_FILE, JSON.stringify([], null, 2));
+}
+
+const db = {
+  // Get all articles
+  getAllArticles: () => {
+    try {
+      const data = fs.readFileSync(ARTICLES_FILE, 'utf-8');
+      return JSON.parse(data) || [];
+    } catch (error) {
+      console.error('Error reading articles:', error);
+      return [];
+    }
+  },
+
+  // Get article by ID
+  getArticleById: (id) => {
+    const articles = db.getAllArticles();
+    return articles.find(a => a.id === parseInt(id));
+  },
+
+  // Get article by slug
+  getArticleBySlug: (slug) => {
+    const articles = db.getAllArticles();
+    return articles.find(a => a.slug === slug);
+  },
+
+  // Create new article
+  createArticle: (articleData) => {
+    try {
+      const articles = db.getAllArticles();
+      
+      // Generate ID
+      const id = articles.length > 0 ? Math.max(...articles.map(a => a.id)) + 1 : 1;
+      
+      // Create slug from title
+      const slug = articleData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      const newArticle = {
+        id,
+        slug,
+        title: articleData.title,
+        content: articleData.content,
+        topic: articleData.topic || 'general',
+        createdAt: new Date().toISOString(),
+      };
+
+      articles.push(newArticle);
+      fs.writeFileSync(ARTICLES_FILE, JSON.stringify(articles, null, 2));
+      
+      console.log(`✅ Article created: "${newArticle.title}" (ID: ${id})`);
+      return newArticle;
+    } catch (error) {
+      console.error('Error creating article:', error);
+      throw error;
+    }
+  },
+
+  // Delete article (optional)
+  deleteArticle: (id) => {
+    try {
+      const articles = db.getAllArticles();
+      const filtered = articles.filter(a => a.id !== parseInt(id));
+      fs.writeFileSync(ARTICLES_FILE, JSON.stringify(filtered, null, 2));
+      console.log(`✅ Article deleted: ID ${id}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      return false;
+    }
+  },
+};
+
+module.exports = db;

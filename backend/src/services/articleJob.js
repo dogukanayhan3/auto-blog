@@ -2,56 +2,28 @@ const cron = require('node-cron');
 const aiClient = require('./aiClient');
 const db = require('../models/db');
 
-class ArticleJob {
-  constructor() {
-    this.isRunning = false;
-  }
-
-  async generateAndSaveArticle() {
-    if (this.isRunning) {
-      console.log('⏳ Article generation already in progress...');
-      return;
-    }
-
-    try {
-      this.isRunning = true;
-      console.log('🚀 Starting article generation...');
-
-      const articleData = await aiClient.generateArticle();
-      const article = await db.createArticle(articleData);
-
-      console.log('✅ Article generated successfully:', article.title);
-      return article;
-
-    } catch (error) {
-      console.error('❌ Failed to generate article:', error.message);
-    } finally {
-      this.isRunning = false;
-    }
-  }
-
-  // Schedule job to run daily at 9:00 AM
-  startDailyJob() {
-    console.log('⏰ Scheduling daily article generation (9:00 AM)');
+const articleJob = {
+  startDailyJob: () => {
+    const isDev = process.env.NODE_ENV === 'development';
     
-    // Run every day at 9:00 AM
-    cron.schedule('0 9 * * *', () => {
-      console.log('⏰ Daily cron job triggered');
-      this.generateAndSaveArticle();
+    // In development: every hour (for testing)
+    // In production: every day at 9 AM UTC
+    const schedule = isDev ? '0 * * * *' : '0 9 * * *';
+    const scheduleDesc = isDev ? 'every hour' : 'daily at 9 AM UTC';
+
+    console.log(`⏰ Scheduling article generation: ${scheduleDesc}`);
+
+    cron.schedule(schedule, async () => {
+      try {
+        console.log(`🤖 Running scheduled article generation at ${new Date().toISOString()}`);
+        const articleData = await aiClient.generateArticle();
+        const article = db.createArticle(articleData);
+        console.log(`✅ Scheduled article created: "${article.title}"`);
+      } catch (error) {
+        console.error('❌ Error in scheduled job:', error.message);
+      }
     });
+  },
+};
 
-    // Also run every hour for testing (comment out in production)
-    // cron.schedule('0 * * * *', () => {
-    //   console.log('⏰ Hourly test cron job triggered');
-    //   this.generateAndSaveArticle();
-    // });
-  }
-
-  // Manual trigger for testing
-  async triggerManual() {
-    console.log('🔧 Manual article generation triggered');
-    return await this.generateAndSaveArticle();
-  }
-}
-
-module.exports = new ArticleJob();
+module.exports = articleJob;
