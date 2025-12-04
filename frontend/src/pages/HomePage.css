@@ -1,0 +1,63 @@
+.home-page {
+  min-height: calc(100vh - 200px);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.page-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: #718096;
+}
+
+.articles-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.no-articles {
+  text-align: center;
+  padding: 48px;
+  color: #718096;
+}
+
+.error-container {
+  text-align: center;
+  padding: 48px;
+}
+
+.error-message {
+  color: #e53e3e;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.retry-button {
+  background: #3182ce;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.retry-button:hover {
+  background: #2c5aa0;
+}
