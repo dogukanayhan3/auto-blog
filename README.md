@@ -16,7 +16,7 @@ Fully automated blog platform that generates articles daily using HuggingFace AI
 │      Node.js + Express Backend      │
 │  - REST API                         │
 │  - JSON Storage (articles.json)     │
-│  - Daily Cron Job (node-cron)      │
+│  - Daily Cron Job (node-cron)       │
 └─────────────────────────────────────┘
 ```
 
