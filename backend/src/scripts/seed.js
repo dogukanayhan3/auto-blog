@@ -1,28 +1,45 @@
+require('dotenv').config();
 const db = require('../models/db');
 const aiClient = require('../services/aiClient');
 
 async function seedArticles() {
   try {
-    console.log('🌱 Seeding initial articles...');
+    console.log('🌱 Starting database seeding...\n');
     
-    const articles = await db.getAllArticles();
-    if (articles.length > 0) {
-      console.log(`✅ Articles already exist (${articles.length} found), skipping seed`);
+    const existingArticles = db.getAllArticles();
+    
+    if (existingArticles.length >= 3) {
+      console.log(`✅ Database already has ${existingArticles.length} articles`);
+      console.log('   Skipping seed process\n');
       process.exit(0);
     }
 
-    console.log('📝 Generating 5 initial articles...');
+    const articlesToGenerate = 3 - existingArticles.length;
+    console.log(`📝 Generating ${articlesToGenerate} initial articles...\n`);
     
-    for (let i = 0; i < 5; i++) {
-      console.log(`  [${i + 1}/5] Generating article...`);
-      const articleData = await aiClient.generateArticle();
-      await db.createArticle(articleData);
-      // Delay between API calls to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    for (let i = 0; i < articlesToGenerate; i++) {
+      console.log(`📄 [${i + 1}/${articlesToGenerate}] Generating article...`);
+      
+      try {
+        const articleData = await aiClient.generateArticle();
+        const article = db.createArticle(articleData);
+        console.log(`   ✅ Created: "${article.title}"\n`);
+      } catch (error) {
+        console.error(`   ❌ Failed to generate article ${i + 1}:`, error.message);
+        console.log('   ⏭️ Continuing with next article...\n');
+      }
+      
+      // Wait between requests to avoid rate limiting
+      if (i < articlesToGenerate - 1) {
+        console.log('   ⏳ Waiting 3 seconds before next generation...\n');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     }
 
+    const finalArticles = db.getAllArticles();
     console.log('✅ Seeding complete!');
-    console.log('📊 Total articles:', db.getAllArticles().length);
+    console.log(`📊 Total articles in database: ${finalArticles.length}\n`);
+    
     process.exit(0);
   } catch (error) {
     console.error('❌ Seed error:', error.message);

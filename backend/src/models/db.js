@@ -7,11 +7,13 @@ const ARTICLES_FILE = path.join(DATA_DIR, 'articles.json');
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  console.log('📁 Created data directory');
 }
 
 // Ensure articles.json exists
 if (!fs.existsSync(ARTICLES_FILE)) {
   fs.writeFileSync(ARTICLES_FILE, JSON.stringify([], null, 2));
+  console.log('📄 Created articles.json file');
 }
 
 const db = {
@@ -19,9 +21,11 @@ const db = {
   getAllArticles: () => {
     try {
       const data = fs.readFileSync(ARTICLES_FILE, 'utf-8');
-      return JSON.parse(data) || [];
+      const articles = JSON.parse(data) || [];
+      // Sort by creation date, newest first
+      return articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } catch (error) {
-      console.error('Error reading articles:', error);
+      console.error('❌ Error reading articles:', error);
       return [];
     }
   },
@@ -46,8 +50,8 @@ const db = {
       // Generate ID
       const id = articles.length > 0 ? Math.max(...articles.map(a => a.id)) + 1 : 1;
       
-      // Create slug from title
-      const slug = articleData.title
+      // Create slug from title (or use provided slug)
+      const slug = articleData.slug || articleData.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
@@ -64,10 +68,10 @@ const db = {
       articles.push(newArticle);
       fs.writeFileSync(ARTICLES_FILE, JSON.stringify(articles, null, 2));
       
-      console.log(`✅ Article created: "${newArticle.title}" (ID: ${id})`);
+      console.log(`✅ Article saved to database: "${newArticle.title}" (ID: ${id})`);
       return newArticle;
     } catch (error) {
-      console.error('Error creating article:', error);
+      console.error('❌ Error creating article:', error);
       throw error;
     }
   },
@@ -81,7 +85,7 @@ const db = {
       console.log(`✅ Article deleted: ID ${id}`);
       return true;
     } catch (error) {
-      console.error('Error deleting article:', error);
+      console.error('❌ Error deleting article:', error);
       return false;
     }
   },

@@ -1,63 +1,176 @@
+/* --- 1. Pastel Color Palette & Variables --- */
+:root {
+  --bg-color: #fdfbf7;           /* Warm off-white */
+  --text-primary: #4a4a4a;       /* Soft dark gray */
+  --text-secondary: #8b8b9e;
+  
+  /* Pastels */
+  --pastel-pink: #ffd1dc;
+  --pastel-mint: #d1f7c4;
+  --pastel-blue: #c4e4f7;
+  --pastel-lavender: #e6e6fa;
+  --pastel-cream: #fff5e6;
+  
+  --card-bg: #ffffff;
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* --- 2. Layout & Header --- */
 .home-page {
-  min-height: calc(100vh - 200px);
+  min-height: 100vh;
+  padding: 40px 20px;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
 }
 
 .page-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.header-badge {
+  display: inline-block;
+  background-color: var(--pastel-blue);
+  color: #5a7b90;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
 }
 
 .page-header h1 {
-  font-size: 36px;
-  font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 8px;
+  font-size: 3rem;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #6c5ce7, #ff7675);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -1px;
 }
 
 .subtitle {
-  font-size: 18px;
-  color: #718096;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
 }
 
-.articles-list {
-  max-width: 800px;
-  margin: 0 auto;
+/* --- 3. Grid Layout --- */
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 32px;
 }
 
-.no-articles {
-  text-align: center;
-  padding: 48px;
-  color: #718096;
+/* --- 4. Skeleton Loading System --- */
+.skeleton-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-soft);
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0,0,0,0.02);
 }
 
+.skeleton-image {
+  height: 200px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+}
+
+.skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 80%;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 16px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.skeleton-text.short {
+  width: 60%;
+}
+
+.skeleton-tag {
+  margin-top: auto;
+  height: 30px;
+  width: 80px;
+  border-radius: 50px;
+}
+
+/* The Shimmer Animation Effect */
+.shimmer {
+  background: #f6f7f8;
+  background-image: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 800px 100%; 
+  animation: shimmer 1.5s infinite linear forwards;
+}
+
+@keyframes shimmer {
+  0% { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+
+/* --- 5. Error & Empty States --- */
 .error-container {
-  text-align: center;
-  padding: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
 }
 
-.error-message {
-  color: #e53e3e;
-  margin-bottom: 16px;
-  font-size: 18px;
+.error-card {
+  background: var(--card-bg);
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+  border: 2px solid var(--pastel-pink);
 }
 
 .retry-button {
-  background: #3182ce;
-  color: white;
-  border: none;
+  margin-top: 20px;
   padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 16px;
+  background-color: var(--pastel-lavender);
+  color: #5e5e8e;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.2s ease;
 }
 
 .retry-button:hover {
-  background: #2c5aa0;
+  transform: translateY(-2px);
+  filter: brightness(0.95);
 }
