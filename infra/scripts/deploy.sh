@@ -4,12 +4,12 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 set -e
 
-# Configuration - UPDATE THESE!
-AWS_ACCOUNT_ID="123456789012"  # Replace with YOUR AWS Account ID
+# Configuration - UPDATE THIS!
+AWS_ACCOUNT_ID="673353196782"   # <--AWS Acoount ID 
 AWS_REGION="us-east-1"
 ECR_FRONTEND="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/auto-blog-frontend:latest"
 ECR_BACKEND="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/auto-blog-backend:latest"
@@ -37,12 +37,12 @@ docker volume create blog-data 2>/dev/null || true
 echo -e "${YELLOW}▶️  Starting backend...${NC}"
 docker run -d \
   --name blog-backend \
-  -p 3001:5000 \
+  -p 5000:5000 \
   --restart unless-stopped \
   -v blog-data:/app/src/data \
   -e NODE_ENV=production \
   -e PORT=5000 \
-  -e HUGGINGFACE_API_KEY="$HUGGINGFACE_API_KEY" \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
   $ECR_BACKEND
 
 echo -e "${GREEN}✅ Backend started${NC}"
@@ -54,6 +54,7 @@ docker run -d \
   --name blog-frontend \
   -p 80:80 \
   --restart unless-stopped \
+  --link blog-backend:backend \
   $ECR_FRONTEND
 
 echo -e "${GREEN}✅ Frontend started${NC}"
@@ -64,5 +65,5 @@ echo -e "${GREEN}✅ Deployment complete!${NC}"
 echo -e "${GREEN}================================${NC}"
 echo ""
 echo -e "Frontend: ${YELLOW}http://$(hostname -I | awk '{print $1}')${NC}"
-echo -e "Backend API: ${YELLOW}http://$(hostname -I | awk '{print $1}'):3001${NC}"
+echo -e "Backend API: ${YELLOW}http://$(hostname -I | awk '{print $1}'):5000${NC}"
 echo ""
