@@ -37,7 +37,7 @@ class ArticleJob {
     // Format: CRON_SCHEDULE="*/1 * * * *" for every minute
     //         CRON_SCHEDULE="*/10 * * * * *" for every 10 seconds (with seconds support)
     //         CRON_SCHEDULE="0 9 * * *" for daily at 9 AM
-    const customSchedule = "*/1 * * * *"; //process.env.CRON_SCHEDULE;
+    const customSchedule = "0 9 * * *"; //process.env.CRON_SCHEDULE;
     const isDev = process.env.NODE_ENV === 'development';
     
     let schedule;
