@@ -7,3 +7,4 @@ README.md
 src/data/articles.json
 *.log
 .DS_Store
+Thumbs.db

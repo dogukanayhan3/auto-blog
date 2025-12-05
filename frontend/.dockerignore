@@ -1,10 +1,11 @@
 node_modules
 build
+npm-debug.log
+.env
+.env.local
 .git
 .gitignore
 README.md
-.env
-npm-debug.log
+*.log
 .DS_Store
-public/
-src/
+Thumbs.db
