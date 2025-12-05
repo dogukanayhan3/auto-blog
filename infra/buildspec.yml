@@ -8,7 +8,7 @@ phases:
       - REPO_FRONTEND=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/auto-blog-frontend
       - REPO_BACKEND=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/auto-blog-backend
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - echo "📦 Image tag: $IMAGE_TAG"
+      - echo "📦 Image tag is $IMAGE_TAG"
 
   build:
     commands:
