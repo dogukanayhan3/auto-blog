@@ -33,36 +33,20 @@ class ArticleJob {
   }
 
   startDailyJob() {
-    // Get schedule from environment variable or use defaults
-    // Format: CRON_SCHEDULE="*/1 * * * *" for every minute
-    //         CRON_SCHEDULE="*/10 * * * * *" for every 10 seconds (with seconds support)
-    //         CRON_SCHEDULE="0 9 * * *" for daily at 9 AM
-    const customSchedule = "0 9 * * *"; //process.env.CRON_SCHEDULE;
-    const isDev = process.env.NODE_ENV === 'development';
-    
-    let schedule;
-    let description;
+    // If you want custom override for testing via env variables
+    const customSchedule = process.env.CRON_SCHEDULE || "35 10 * * *"; // default 10:35:00 for Turkiye time
+    const timeZone = "Europe/Istanbul"; // Always Turkiye time
 
-    if (customSchedule) {
-      schedule = customSchedule;
-      description = `custom schedule: ${customSchedule}`;
-    } else if (isDev) {
-      // In development: every 5 minutes for testing
-      schedule = '*/5 * * * *';
-      description = 'every 5 minutes (development mode)';
-    } else {
-      // In production: every day at 9:00 AM
-      schedule = '0 9 * * *';
-      description = 'daily at 9:00 AM (production mode)';
-    }
+    console.log(`⏰ Scheduling article generation @ 10:35 Turkiye time (${timeZone})`);
+    console.log('📅 Cron pattern:', customSchedule);
 
-    console.log('⏰ Scheduling article generation:', description);
-    console.log('📅 Cron pattern:', schedule);
-
-    this.cronJob = cron.schedule(schedule, async () => {
-      const timestamp = new Date().toISOString();
-      console.log(`\n⏰ Cron job triggered at ${timestamp}`);
+    this.cronJob = cron.schedule(customSchedule, async () => {
+      const timestamp = new Date().toLocaleString("en-GB", { timeZone });
+      console.log(`\n⏰ Cron job triggered at ${timestamp} (Turkiye time)`);
       await this.generateAndSaveArticle();
+    },{
+      scheduled: true,
+      timezone: timeZone
     });
 
     console.log('✅ Cron job scheduled successfully');
