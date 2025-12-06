@@ -34,10 +34,10 @@ class ArticleJob {
 
   startDailyJob() {
     // If you want custom override for testing via env variables
-    const customSchedule = process.env.CRON_SCHEDULE || "35 10 * * *"; // default 10:35:00 for Turkiye time
+    const customSchedule = process.env.CRON_SCHEDULE || "00 10 * * *"; // default 10:00:00 for Turkiye time
     const timeZone = "Europe/Istanbul"; // Always Turkiye time
 
-    console.log(`⏰ Scheduling article generation @ 10:35 Turkiye time (${timeZone})`);
+    console.log(`⏰ Scheduling article generation @ 10:00 Turkiye time (${timeZone})`);
     console.log('📅 Cron pattern:', customSchedule);
 
     this.cronJob = cron.schedule(customSchedule, async () => {
