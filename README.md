@@ -1,393 +1,172 @@
-# 🚀 Auto-Blog: AI-Generated Blog System
+# Auto-Blog – AI Generated Blog Platform
 
-Fully automated blog platform that generates articles daily using HuggingFace AI.
+Auto-Blog is a full-stack challenge solution that automatically generates, stores, and serves technology articles. It uses a React.js, a Node.js/Express backend with scheduled OpenAI calls, Dockerized workloads, and an AWS pipeline (CodeBuild → ECR → EC2).
 
-## 🏗️ Architecture
+## Key Capabilities
+- 📰 **Daily content generation** – `node-cron` triggers OpenAI (gpt-3.5-turbo) once per day.
+- ⚙️ **API-first backend** – REST endpoints for listing, retrieving, and manually generating articles.
+- 🎨 **Responsive React UI** – List/detail views with skeleton loaders, powered by Axios client abstraction.
+- 🐳 **Containerized everywhere** – Individual Dockerfiles, docker-compose for local parity, and ECR-hosted images.
+- ☁️ **AWS-ready pipeline** – CodeBuild builds/pushes images, EC2 host pulls via `infra/scripts/deploy.sh`.
+
+## Architecture Snapshot
 
 ```
-┌─────────────┐         ┌──────────────┐
-│   React     │         │  HuggingFace │
-│  Frontend   │────────▶│  AI API      │
-└─────────────┘         └──────────────┘
-       │                       ▲
-       │                       │
-       ▼                       │
-┌─────────────────────────────────────┐
-│      Node.js + Express Backend      │
-│  - REST API                         │
-│  - JSON Storage (articles.json)     │
-│  - Daily Cron Job (node-cron)       │
-└─────────────────────────────────────┘
+User ─▶ Nginx (frontend container :80) ─▶ Express API (backend container :5000) ─▶ JSON datastore (Docker volume)
+                                        └─▶ node-cron + OpenAI (daily generation)
+Git push ─▶ AWS CodeBuild ─▶ Amazon ECR ─▶ EC2 pull & run (deploy.sh)
 ```
 
-## 🛠️ Tech Stack
+See `docs/ARCHITECTURE.md` for a deeper breakdown of flows, config matrix, and future improvements.
 
-- **Frontend:** React 19 + React Router + Nginx
-- **Backend:** Node.js + Express + node-cron
-- **AI:** HuggingFace Inference API (Mistral-7B)
-- **Storage:** JSON files (Docker volume)
-- **Deployment:** Docker + AWS EC2 + AWS CodeBuild + AWS ECR
+## Repository Layout
 
-## 📋 Prerequisites
+```
+.
+├── backend/                # Express API, cron job, data access
+├── frontend/               # React + nginx config
+├── infra/
+│   └── scripts/            # EC2 bootstrap + deployment helpers
+├── docs/                   # Architecture reference
+├── docker-compose.yml      # Local multi-container dev
+├── buildspec.yml           # AWS CodeBuild definition
+└── README.md               # You are here
+```
 
+## 1. Prerequisites
+
+- Node.js 20+, npm 10+
 - Docker & Docker Compose
-- Node.js 18+
-- AWS Account (free tier)
-- HuggingFace API key (free)
+- AWS account with permissions for ECR, CodeBuild, EC2
+- OpenAI API key
 
-## 🚀 Quick Start (Local Development)
+## 2. Environment Configuration
 
-### 1. Clone and Setup
+Create a root `.env` (used by Docker Compose) and component-specific files as needed.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/auto-blog.git
-cd auto-blog
-
-# Create .env file
-echo "HUGGINGFACE_API_KEY=hf_YOUR_KEY_HERE" > .env
+# ./.env
+OPENAI_API_KEY=sk-xxxx
+CRON_SCHEDULE=00 10 * * *   # optional override (gets triggered at 10:00 AM everyday in Europe/Istanbul time as default)
 ```
 
-Get your free HuggingFace API key: https://huggingface.co/settings/tokens
+Optional frontend override for local dev (`frontend/.env`):
 
-### 2. Run with Docker Compose
+```
+REACT_APP_API_URL=http://localhost:3001/api
+```
+
+Backend accepts `PORT` (default 5000) and `NODE_ENV`.
+
+## 3. Local Development
+
+### Option A – Docker Compose (closest to prod)
 
 ```bash
 docker-compose up --build
 ```
 
-Visit:
-- **Frontend:** http://localhost
-- **Backend:** http://localhost:3001
-- **Health:** http://localhost:3001/health
+- Frontend: http://localhost (port 80)
+- Backend API/health: http://localhost:3001 / http://localhost:3001/health
+- Data persists inside the named volume `articles-data`.
 
-### 3. Generate Initial Articles
+### Option B – Run services manually
 
 ```bash
-docker exec auto-blog-backend npm run seed
+# Terminal 1
+cd backend && npm install && npm run dev
+
+# Terminal 2
+cd frontend && npm install && npm start
 ```
 
-## 📦 AWS Deployment
+Set `REACT_APP_API_URL` if the backend runs on a non-default port.
 
-### Prerequisites
+### Seeding Initial Articles
 
 ```bash
-# Install AWS CLI
-brew install awscli
-
-# Configure AWS
-aws configure
-# Enter your Access Key, Secret Key, Region (us-east-1)
+cd backend
+npm run seed   # guarantees at least 3 articles
 ```
 
-### 1. Create ECR Repositories
+This script is safe to rerun; it checks existing count before generating.
+
+## 4. API Quick Reference
 
 ```bash
-aws ecr create-repository --repository-name auto-blog-frontend --region us-east-1
-aws ecr create-repository --repository-name auto-blog-backend --region us-east-1
+# List articles
+curl http://localhost:3001/api/articles
 
-# Get your AWS Account ID
-aws sts get-caller-identity
-```
+# Get article by slug or id
+curl http://localhost:3001/api/articles/streamlining-software-development-with-continuous-integration-and-deployment
 
-### 2. Launch EC2 Instance
-
-1. Go to AWS EC2 Dashboard
-2. Click "Launch Instance"
-3. Configure:
-   - **Name:** auto-blog-server
-   - **AMI:** Ubuntu 22.04 LTS
-   - **Instance type:** t2.micro (free tier)
-   - **Storage:** 30GB
-   - **Security Group:** Allow ports 22, 80, 443, 5000
-4. Download key pair: `auto-blog-key.pem`
-
-### 3. Initialize EC2
-
-```bash
-# Connect to EC2
-chmod 400 ~/Downloads/auto-blog-key.pem
-ssh -i ~/Downloads/auto-blog-key.pem ubuntu@YOUR_EC2_PUBLIC_IP
-
-# Run initialization script (on EC2)
-# First, download the script or copy it manually
-bash init-ec2.sh
-
-# Configure AWS
-aws configure
-# Use same credentials as your local machine
-
-# Exit
-exit
-```
-
-### 4. Setup CodeBuild (Automated Builds)
-
-1. Go to AWS CodeBuild
-2. Click "Create build project"
-3. Configure:
-   - **Name:** auto-blog-build
-   - **Source:** GitHub (connect your repo)
-   - **Environment:** Ubuntu, Standard:7.0
-   - **Privileged mode:** ✓ (for Docker)
-   - **Buildspec:** Use `buildspec.yml` from source
-4. Create build project
-5. Add IAM permissions:
-   - Go to IAM → Find CodeBuild service role
-   - Attach: `AmazonEC2ContainerRegistryPowerUser`
-
-### 5. Deploy to EC2
-
-```bash
-# SSH into EC2
-ssh -i ~/Downloads/auto-blog-key.pem ubuntu@YOUR_EC2_PUBLIC_IP
-
-# Configure AWS CLI
-aws configure
-
-# Run deployment
-bash /home/ubuntu/auto-blog/deploy.sh
-
-# Verify
-curl http://localhost:5000/health
-```
-
-## 📝 API Endpoints
-
-```bash
-# Get all articles
-curl http://YOUR_EC2_IP:3001/api/articles
-
-# Get single article
-curl http://YOUR_EC2_IP:3001/api/articles/1
-# or by slug
-curl http://YOUR_EC2_IP:3001/api/articles/exploring-artificial-intelligence
+# Manual generation
+curl -X POST http://localhost:3001/api/articles/generate
 
 # Health check
-curl http://YOUR_EC2_IP:3001/health
-
-# Manual article generation (for testing)
-curl -X POST http://YOUR_EC2_IP:3001/api/articles/generate
+curl http://localhost:3001/health
 ```
 
-## 🔧 Environment Variables
+Responses follow `{ success, data, ... }` envelopes; see `backend/src/routes/articles.js`.
 
-### Backend
+## 5. AWS Deployment Workflow
+
+### 5.1 Prepare AWS Resources
+1. **ECR repositories**
+   ```bash
+   aws ecr create-repository --repository-name auto-blog-frontend
+   aws ecr create-repository --repository-name auto-blog-backend
+   ```
+2. **EC2 host**
+   - Ubuntu 22.04 LTS, t2.micro (free tier), 30GB gp3.
+   - Security group: allow 22 (SSH), 80 (HTTP), 5000 (API), 443 if you plan to add TLS.
+
+### 5.2 Bootstrap EC2
 
 ```bash
-PORT=5000
-NODE_ENV=production
-HUGGINGFACE_API_KEY=hf_your_key_here
+scp -i <key>.pem infra/scripts/init-ec2.sh ubuntu@<EC2_IP>:~
+ssh -i <key>.pem ubuntu@<EC2_IP>
+bash init-ec2.sh
+aws configure   # set same credentials used by CodeBuild
 ```
 
-### Frontend
+### 5.3 Continuous Delivery via CodeBuild
+1. Create a CodeBuild project pointing to this GitHub repo.
+2. Enable privileged mode and use `buildspec.yml`.
+3. Set environment variables `AWS_ACCOUNT_ID`, `AWS_REGION` (or inject via Parameter Store).
+4. Attach `AmazonEC2ContainerRegistryPowerUser` to the CodeBuild service role.
+5. On each push, CodeBuild builds/pushes both images tagged `latest` + short SHA.
+
+### 5.4 Deploy to EC2
 
 ```bash
-REACT_APP_API_URL=http://your-backend-url/api
+scp -i <key>.pem -r infra/scripts ubuntu@<EC2_IP>:~/auto-blog/infra/scripts
+ssh -i <key>.pem ubuntu@<EC2_IP>
+export OPENAI_API_KEY=sk-...        # or store in ~/.bashrc
+bash ~/auto-blog/infra/scripts/deploy.sh
 ```
 
-## 📅 Automatic Article Generation
+- Script logs in to ECR, pulls latest tags, recreates containers, and keeps the `blog-data` volume with historical posts.
+- Verify with `curl http://localhost:5000/health` (from EC2) or hit the public IP in a browser.
 
-Articles are automatically generated daily at **9:00 AM UTC** using `node-cron`.
+## 6. Observability & Operations
 
-**In development:** Every hour (for testing)
-**In production:** Every day at 9:00 AM
+- `docker logs blog-backend` → cron execution, AI responses, errors.
+- `docker logs blog-frontend` → nginx access logs.
+- Backend container exposes `/health` for uptime checks; Docker health checks restart unhealthy containers automatically.
+- Data backup: `docker run --rm -v blog-data:/data alpine tar czf - /data > articles-backup.tgz`.
 
-Check logs:
-```bash
-docker logs auto-blog-backend -f
-```
+## 7. Troubleshooting
 
-## 🗂️ Project Structure
+| Issue | Fix |
+| --- | --- |
+| Articles stuck at 0 | Run `npm run seed` or `POST /api/articles/generate`. Confirm OpenAI key. |
+| Cron not firing | Confirm timezone/CRON env and backend logs. Ensure container clock/timezone is correct. |
+| Frontend can’t reach API | When not using nginx proxy, set `REACT_APP_API_URL` to full backend origin before building. |
+| CodeBuild fails on docker | Ensure “Privileged mode” is enabled and service role has ECR permissions. |
 
-```
-auto-blog/
-├── backend/
-│   ├── src/
-│   │   ├── index.js                 # Express server
-│   │   ├── routes/
-│   │   │   └── articles.js         # API routes
-│   │   ├── services/
-│   │   │   ├── aiClient.js         # HuggingFace integration
-│   │   │   └── articleJob.js       # Cron job scheduler
-│   │   ├── models/
-│   │   │   └── db.js               # JSON database
-│   │   └── data/                    # Persistent storage
-│   ├── Dockerfile
-│   ├── package.json
-│   └── README.md
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.js
-│   │   ├── components/
-│   │   │   ├── Header.js
-│   │   │   ├── ArticleCard.jsx
-│   │   │   └── Loading.js
-│   │   ├── pages/
-│   │   │   ├── HomePage.js
-│   │   │   └── ArticlePage.js
-│   │   └── api/
-│   │       └── client.js           # Axios instance
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   └── package.json
-│
-├── infra/
-│   ├── buildspec.yml               # AWS CodeBuild config
-│   └── scripts/
-│       ├── deploy.sh               # Deployment script
-│       └── init-ec2.sh             # EC2 initialization
-│
-├── docker-compose.yml              # Local development
-├── .env                            # Environment variables
-└── README.md
-```
-
-## 🧪 Testing
-
-### Local Testing
-
-```bash
-# Start everything
-docker-compose up --build
-
-# In another terminal, test endpoints
-curl http://localhost:5000/health
-curl http://localhost:5000/api/articles
-
-# Generate test article
-curl -X POST http://localhost:5000/api/articles/generate
-```
-
-### Check Logs
-
-```bash
-# Backend logs
-docker logs auto-blog-backend -f
-
-# Frontend logs
-docker logs auto-blog-frontend -f
-
-# View articles (local)
-cat backend/src/data/articles.json | jq .
-```
-
-## 🐛 Troubleshooting
-
-### Articles not generating?
-
-```bash
-# Check backend logs
-docker logs auto-blog-backend
-
-# Verify HuggingFace API key
-echo $HUGGINGFACE_API_KEY
-
-# Manual trigger
-curl -X POST http://localhost:5000/api/articles/generate
-```
-
-### Frontend not connecting to backend?
-
-```bash
-# Check REACT_APP_API_URL
-cat frontend/.env
-
-# Backend must be running
-curl http://localhost:5000/health
-```
-
-### Docker build fails?
-
-```bash
-# Clean up
-docker-compose down -v
-docker system prune -a
-
-# Rebuild
-docker-compose up --build
-```
-
-## 📊 Monitoring
-
-### Check container status
-
-```bash
-docker ps
-```
-
-### View storage
-
-```bash
-# On EC2
-docker exec auto-blog-backend du -sh /app/src/data/
-docker volume ls
-```
-
-## 🚀 Production Checklist
-
-- [ ] HuggingFace API key set
-- [ ] AWS account created
-- [ ] EC2 instance running
-- [ ] Security group configured (ports 22, 80, 5000)
-- [ ] CodeBuild project created
-- [ ] ECR repositories created
-- [ ] Articles.json has initial data
-- [ ] Cron job is running (check logs)
-- [ ] DNS/URL ready for video submission
-
-## 📧 Submission Checklist
-
-Before emailing hiring@assimetria.com:
-
-- [ ] Live URL: `http://YOUR_EC2_PUBLIC_IP`
-- [ ] GitHub repo public with code
-- [ ] 60-second video explaining the project
-- [ ] At least 3 articles visible
-- [ ] Can click and read full articles
-- [ ] Articles generating daily (check backend logs)
-
-## 📧 Email Template
-
-```
-To: hiring@assimetria.com
-Subject: [Tech Challenge] - Your Name
-
-Hello,
-
-I've completed the Auto-Blog technical challenge.
-
-Live URL: http://YOUR_EC2_PUBLIC_IP
-
-GitHub Repository: https://github.com/YOUR_USERNAME/auto-blog
-
-Demo Video: https://loom.com/share/VIDEO_ID
-
-The application successfully:
-✅ Displays AI-generated blog articles
-✅ Allows reading full articles
-✅ Generates new articles daily via cron
-✅ Deployed on AWS EC2 with Docker
-✅ Uses CodeBuild for CI/CD
-
-Technical details:
-- Frontend: React + Nginx
-- Backend: Node.js + Express
-- Storage: JSON files (persistent)
-- AI: HuggingFace Mistral-7B
-- Infrastructure: Docker + AWS
-
-Thank you,
-Your Name
-```
-
-## 🙏 Support
-
-Having issues? Check:
-1. Backend logs: `docker logs auto-blog-backend`
-2. Frontend logs: `docker logs auto-blog-frontend`
-3. GitHub issues (if applicable)
-
-## 📄 License
-
-MIT
+## 8. References
+- `backend/README.md` – API details, cron behaviour, Docker usage.
+- `frontend/README.md` – UI structure, local dev hints.
+- `docs/ARCHITECTURE.md` – Deep dive architecture & future enhancements.
+- `infra/scripts/init-ec2.sh` / `infra/scripts/deploy.sh` – operational scripts.
