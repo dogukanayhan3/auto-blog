@@ -1,9 +1,11 @@
 .header {
-  background: #1a202c;
+  background: #061656;
   color: white;
-  padding: 16px 0;
+  padding: 20px 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .header .container {
@@ -26,10 +28,6 @@
   font-weight: 700;
 }
 
-.logo:hover h1 {
-  color: #63b3ed;
-}
-
 .nav-link {
   color: white;
   text-decoration: none;
@@ -39,6 +37,6 @@
   transition: background 0.2s;
 }
 
-.nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+.logo:hover, .nav-link:hover {
+  color: #63b3ed;
 }
