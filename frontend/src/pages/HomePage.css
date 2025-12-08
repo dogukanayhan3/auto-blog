@@ -339,8 +339,8 @@ body {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, var(--pastel-lavender), var(--pastel-blue));
-  color: #5a5a8e;
+  background: #061656;
+  color: white;
   border: none;
   border-radius: 100px;
   font-weight: 600;
