@@ -107,13 +107,15 @@
 }
 
 .article-header h1 {
-  margin: 18px 0;
+  text-align: center;
+  margin: 40px 0;
   font-size: clamp(2rem, 4.2vw, 3.5rem);
   color: #2f2f34;
-  line-height: 1.15;
+  line-height: 1.25;
 }
 
 .article-meta {
+  justify-content: center;
   display: flex;
   gap: 18px;
   flex-wrap: wrap;

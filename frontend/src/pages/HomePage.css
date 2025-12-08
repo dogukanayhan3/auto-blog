@@ -135,8 +135,8 @@ body {
   border: none;
   padding: 12px 24px;
   border-radius: 999px;
-  background: linear-gradient(120deg, var(--pastel-mint), var(--pastel-blue));
-  color:  #061656;
+  background:  #061656;
+  color:  white;
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
