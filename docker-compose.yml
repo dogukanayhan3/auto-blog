@@ -1,4 +1,4 @@
-services:  # Remove "version: '3.8'" line above this
+services: 
   backend:
     build:
       context: ./backend
